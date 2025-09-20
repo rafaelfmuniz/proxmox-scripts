@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
-# ----------------------------------------------------------------------------------
-# Proxmox VE Helper Script (container-side)
-# Instala Docker + Portainer + drivers GPU (Intel/AMD/NVIDIA)
-# ----------------------------------------------------------------------------------
+# Author: Rafael Muniz (based on community-scripts)
+# License: MIT
+# Source: https://www.docker.com/
 
-# Carregar funções da comunidade
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
 verb_ip6
@@ -13,7 +11,11 @@ setting_up_container
 network_check
 update_os
 
-# Detectar GPU dentro do LXC (via devices expostos)
+msg_info "Instalando pacotes base"
+$STD apt-get install -y curl gnupg ca-certificates vainfo
+msg_ok "Pacotes base instalados"
+
+# Detectar GPU
 GPU_KIND="UNKNOWN"
 if ls /dev/dri/renderD128 &>/dev/null; then
   if vainfo 2>/dev/null | grep -qi intel; then GPU_KIND="INTEL"; fi
@@ -21,18 +23,14 @@ if ls /dev/dri/renderD128 &>/dev/null; then
 fi
 if ls /dev/nvidia0 &>/dev/null; then GPU_KIND="NVIDIA"; fi
 
-msg_info "Instalando pacotes base"
-$STD apt-get install -y curl gnupg ca-certificates vainfo
-msg_ok "Pacotes base instalados"
-
 case "$GPU_KIND" in
   INTEL)
-    msg_info "Instalando drivers Intel VAAPI"
+    msg_info "Instalando drivers Intel (VAAPI)"
     $STD apt-get install -y i965-va-driver
     msg_ok "Drivers Intel instalados"
     ;;
   AMD)
-    msg_info "Instalando drivers AMD Mesa"
+    msg_info "Instalando drivers AMD (Mesa)"
     $STD apt-get install -y mesa-va-drivers mesa-vulkan-drivers
     msg_ok "Drivers AMD instalados"
     ;;
@@ -42,16 +40,13 @@ case "$GPU_KIND" in
     msg_ok "Toolkit NVIDIA instalado"
     ;;
   *)
-    msg_info "Nenhuma GPU detectada ou drivers não necessários"
+    msg_info "Nenhuma GPU detectada"
     ;;
 esac
 
-# Instalar Docker
+# Docker
 DOCKER_LATEST_VERSION=$(curl -fsSL https://api.github.com/repos/moby/moby/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
 msg_info "Instalando Docker $DOCKER_LATEST_VERSION"
-DOCKER_CONFIG_PATH='/etc/docker/daemon.json'
-mkdir -p $(dirname $DOCKER_CONFIG_PATH)
-echo -e '{\n  "log-driver": "journald"\n}' >$DOCKER_CONFIG_PATH
 $STD sh <(curl -fsSL https://get.docker.com)
 msg_ok "Docker $DOCKER_LATEST_VERSION instalado"
 
@@ -74,7 +69,7 @@ fi
 motd_ssh
 customize
 
-msg_info "Limpando pacotes"
+msg_info "Limpando"
 $STD apt-get -y autoremove
 $STD apt-get -y autoclean
-msg_ok "Container pronto"
+msg_ok "Pronto!"
