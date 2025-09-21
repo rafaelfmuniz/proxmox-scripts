@@ -6,10 +6,10 @@ services:
     container_name: stremio
     restart: unless-stopped
     ports:
-      - "11470:11470"
-      - "12470:12470"
+      - "11470:11470"   # HTTP
+      - "12470:12470"   # HTTPS
     devices:
-      - /dev/dri/renderD128:/dev/dri/renderD128
+      - /dev/dri/renderD128:/dev/dri/renderD128   # GPU passthrough (Intel/AMD VAAPI)
     environment:
       - TZ=America/Denver
       - PUID=1000
