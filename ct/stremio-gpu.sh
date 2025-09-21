@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Author: Rafael Muniz
-# License: MIT
-# Source: https://github.com/rafaelfmuniz/proxmox-scripts
-
 set -e
 
 CONTAINER_NAME="stremio"
@@ -13,22 +9,26 @@ DATA_PATH="/opt/stremio-data"
 
 echo "─────────────────────────────────────────────"
 echo "   Proxmox Helper Script"
-echo "   LXC: Stremio + GPU passthrough"
+echo "   Stremio + GPU passthrough (FFmpeg interno)"
 echo "─────────────────────────────────────────────"
 
 echo ">> Preparando ambiente..."
 mkdir -p $DATA_PATH
 
-echo ">> Criando Dockerfile temporário..."
+echo ">> Criando Dockerfile customizado..."
 cat > Dockerfile.stremio <<'EOF'
 FROM stremio/server:latest
 
+# Instalar ffmpeg + VAAPI drivers
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ffmpeg \
+        vainfo \
         mesa-va-drivers \
-        vainfo && \
-    rm -rf /var/lib/apt/lists/*
+        mesa-vulkan-drivers \
+        intel-media-va-driver \
+        i965-va-driver \
+    && rm -rf /var/lib/apt/lists/*
 EOF
 
 echo ">> Buildando imagem customizada ($IMAGE_NAME)..."
@@ -44,8 +44,8 @@ docker run -d \
   -p ${HTTP_PORT}:11470 \
   -p ${HTTPS_PORT}:12470 \
   -v $DATA_PATH:/root/.stremio-server \
-  -v /usr/lib/x86_64-linux-gnu/dri:/usr/lib/x86_64-linux-gnu/dri:ro \
   --device /dev/dri/renderD128:/dev/dri/renderD128 \
+  --device /dev/dri/card1:/dev/dri/card1 \
   $IMAGE_NAME
 
 echo "✔ Container '$CONTAINER_NAME' iniciado."
