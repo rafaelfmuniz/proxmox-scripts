@@ -17,6 +17,8 @@ services:
     volumes:
       - stremio-data:/root/.stremio-server
       - /usr/lib/x86_64-linux-gnu/dri:/usr/lib/x86_64-linux-gnu/dri:ro
+      - /usr/bin/ffmpeg:/usr/lib/jellyfin-ffmpeg/ffmpeg:ro
+      - /usr/bin/ffprobe:/usr/lib/jellyfin-ffmpeg/ffprobe:ro
 
 volumes:
   stremio-data:
