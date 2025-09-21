@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  stremio:
+    build: .
+    container_name: stremio
+    restart: unless-stopped
+    ports:
+      - "11470:11470"
+      - "12470:12470"
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    environment:
+      - TZ=America/Denver
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - stremio-data:/root/.stremio-server
+      - /usr/lib/x86_64-linux-gnu/dri:/usr/lib/x86_64-linux-gnu/dri:ro
+
+volumes:
+  stremio-data:
